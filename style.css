@@ -1,0 +1,311 @@
+@import url("https://fonts.googleapis.com/css2?family=Delius+Swash+Caps&family=Fira+Code:wght@300..700&display=swap");
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-family: "Fira Code", serif;
+}
+
+/* Styling for the To-Do List Page */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #121212;
+  color: #FFFFFF;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  user-select: none;
+}
+
+section#create_task {
+  position: fixed;
+  top: 25%;
+  background-color: #2C2C2C;
+  border-radius: 1.6rem;
+  padding: 4rem;
+  box-shadow: 0 0.8rem 1.6rem rgba(0, 0, 0, 0.5);
+  width: 40rem;
+  text-align: center;
+}
+
+section#create_task h2 {
+  font-size: 3.4rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+label {
+  font-size: 1.6rem;
+  margin-bottom: 0.8rem;
+  text-align: left;
+  display: block;
+}
+
+input[type="text"],  /* Attribute selector */
+input[type="datetime-local"] {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  border: none;
+  background-color: #404040;
+  color: #FFFFFF;
+  font-size: 1.6rem;
+}
+#importance {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  border: none;
+  background-color: #404040;
+  color: #FFFFFF;
+  font-size: 1.6rem;
+}
+input[type="text"]::placeholder,
+input[type="datetime-local"]::placeholder,
+input[type="time"]::placeholder {
+  color: #B3B3B3;
+  font-style: italic;
+}
+
+button {
+  margin-top: 1rem;
+  padding: 1.2rem;
+  border: none;
+  border-radius: 0.8rem;
+  background-color: #B3A569;
+  color: #1E1E1E;
+  font-size: 1.6rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.5s ease-out;
+}
+
+button:hover {
+  background-color: #72663c;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4rem;
+}
+
+header h3 {
+  font-size: 3.4rem;
+  font-weight: 500;
+}
+
+
+main {
+  width: 75%;
+  height: 75%;
+  background-color: #1E1E1E;
+  border-radius: 1.6rem;
+  box-shadow: 0 0.8rem 1.6rem rgba(0, 0, 0, 0.5);
+  padding: 2rem;
+  margin: 2rem 0;
+  overflow: scroll;
+}
+
+main section{
+  height: 80%;
+  overflow: scroll;
+}
+
+.Task_list {
+  margin-top: 2rem;
+  min-height: 50vh;
+}
+.Task_list h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+
+main section ul li {
+  display: grid;
+  width: 97%;
+  margin: 0 auto;
+  grid-template-columns: 2fr 3fr 3fr 1.5fr 1.5fr;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 0;
+  background-color: #2C2C2C;
+  border-radius: 0.8rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease-out;
+  column-gap: 0.5rem;
+}
+ul li#header {
+  box-shadow: 5px 5px 10px #000;
+  color: #FFD700;
+}
+ul li:hover, .hover:hover {
+  transform: scale(1.02);
+}
+ul p {
+  margin: 0;
+  font-size: 2.3rem;
+}
+
+.completed, .delete, .restore, .pending, .extend_deadline {
+  cursor: pointer;
+  font-size: 2rem;
+  color: #FFD700;
+  transition: color 0.3s, transform 0.2s;
+}
+.hover_complete:hover  {
+  color: #7FFF00;
+  transform: scale(1.5) rotate(10deg);
+}
+.restore:hover, .pending:hover, .extend_deadline:hover {
+  color: #7FFF00;
+  transform: scale(1.5);
+}
+.delete:hover {
+  color: #FF4500;
+  transform: scale(1.5);
+}
+
+
+
+.add {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 6rem;
+  height: 6rem;
+  background-color: #FFD700;
+  color: #1E1E1E;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.3s ease-out;
+}
+.add:hover{
+  transform: scale(1.1);
+}
+.add p {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: fixed;
+  top: 30%;
+  left: 1%;
+  background-color: #FFD700;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+#delete, #missed, #completed, #pending, #home {
+  color: #1E1E1E;
+  /* border-bottom: 0.5px solid gray; */
+  font-size: 3rem;
+  transition: transform 0.2s ease, background-color 0.3s ease-out;
+  padding: 2rem 1rem;
+  transition: color 0.3s, transform 0.2s;
+}
+#home:hover {
+  color: #00BFFF;
+  transform: scale(1.5);
+}
+#delete:hover {
+  color: #FF4500;
+  transform: scale(1.5);  
+}
+#completed:hover {
+  color: green;
+  transform: scale(1.5) rotate(10deg);
+}
+#missed:hover {
+  color: #ff00f7;
+  transform: scale(1.5) rotate(10deg);
+}
+#pending:hover {
+  color: blue;
+  transform: scale(1.5) rotate(10deg);
+}
+
+#EXTEND h2 {
+  font-size: 3rem;
+}
+
+
+footer p {
+  font-size: 1.5rem;
+  padding-top: 5rem;
+}
+
+
+@media (max-width: 700px) {
+    ul#task li, ul#task1 li {
+      grid-template-columns: 4fr 1fr 1fr;
+      row-gap: 2rem;
+      column-gap: 1rem;
+      padding: 5%;
+      justify-items: start;
+    }
+    ul#task li, ul#task1 li p{
+      font-size: 1.8rem;
+    }
+    #name {
+      grid-column: 1/2;
+      grid-row: 1/2;
+    }
+    #end_date {
+      text-align: left;
+      grid-column: 1/2;
+      grid-row: 2/3;
+    }
+    #status {
+      grid-column: 2/4;
+      grid-row: 1/2;
+      color: wheat;
+      justify-self: end;
+    }
+    .completed {
+      grid-column: 2/3;
+      grid-row: 2/3;
+      justify-self: end;
+    }
+    .delete {
+      grid-column: 3/4;
+      grid-row: 2/3;
+      justify-self: end;
+    }
+}
+
+@media (min-width: 1750px) {  
+  ul#task li, ul#task1 li p{
+    font-size: 1.8rem;
+  }
+  
+}
