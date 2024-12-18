@@ -219,7 +219,7 @@ document.getElementById('add_task_form').addEventListener('submit', function(e) 
     let deadline = document.getElementById('deadline').value.split('T');
     deadline = `${deadline[0]} ${deadline[1]}`;
     let importance = document.getElementById('importance').value;
-    localStorage.setItem(`task-${i}`, JSON.stringify({'task_name': task_name, 'deadline': deadline, 'importance': importance, 'task_status': "Pending", 'isDeleted': false, 'isCompleted': false, 'restoreit': false}));
+    localStorage.setItem(`task-${i}`, JSON.stringify({'task_name': task_name, 'deadline': deadline, 'importance': importance, 'task_status': "Pending", 'isDeleted': false, 'isCompleted': false}));
     document.getElementById('add_task_form').reset();
     rendertask();
     home.click();
@@ -249,7 +249,6 @@ document.getElementById('all_task').addEventListener('click', function (e) {
         let a = confirm("Are you sure you want to delete this task?");
         if (a) {
             task.isDeleted = true;
-            task.restoreit = false;
             localStorage.setItem(`task-${i}`, JSON.stringify(task));
             rendertask();
         }
@@ -283,7 +282,6 @@ document.getElementById('deleted_task').addEventListener('click', function (e) {
         let a = confirm("Are you sure you want to Restore this task?");
         if (a) {
             task.isDeleted = false;
-            task.restoreit = true;
             localStorage.setItem(`task-${i}`, JSON.stringify(task));
             render_deletedtask();   // To updated deleted task list too.
         }
@@ -298,7 +296,6 @@ document.getElementById('missed_task').addEventListener('click', function (e) {
         let a = confirm("Are you sure you want to delete this task?");
         if (a) {
             task.isDeleted = true;
-            task.restoreit = false;
             localStorage.setItem(`task-${i}`, JSON.stringify(task));
             render_missedtask();
         }
@@ -325,7 +322,6 @@ document.getElementById('completed_task').addEventListener('click', function (e)
         let a = confirm("Are you sure you want to delete this task?");
         if (a) {
             task.isDeleted = true;
-            task.restoreit = false;
             localStorage.setItem(`task-${i}`, JSON.stringify(task));
             render_completedtask();
         }
@@ -353,7 +349,6 @@ document.getElementById('pending_task').addEventListener('click', function (e) {
         let a = confirm("Are you sure you want to delete this task?");
         if (a) {
             task.isDeleted = true;
-            task.restoreit = false;
             localStorage.setItem(`task-${i}`, JSON.stringify(task));
             rendertask();
         }
