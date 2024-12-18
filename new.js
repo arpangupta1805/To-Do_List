@@ -131,8 +131,8 @@ function render_missedtask() {
             li.innerHTML = `<p id="name">${task.task_name}</p>
             <p id="end_date">${task.deadline}</p>
             <p id="status">${task.task_status}</p>
-            <p id = ${i} class="delete material-symbols-outlined">delete</p>
-            <p id = ${i} class="extend_deadline material-symbols-outlined">more_time</p>`
+            <p id = ${i} class="extend_deadline material-symbols-outlined">more_time</p>
+            <p id = ${i} class="delete material-symbols-outlined">delete</p>`
             if (task.importance === '3') {
                 li.style.color = '#FF5555'
             }
@@ -194,8 +194,8 @@ function render_completedtask() {
             li.innerHTML = `<p id="name">${task.task_name}</p>
             <p id="end_date">${task.deadline}</p>
             <p id="status">${task.task_status}</p>
-            <p id = ${i} class="delete material-symbols-outlined">delete</p>
-            <p id = ${i} class="pending material-symbols-outlined">pending</p>`
+            <p id = ${i} class="pending material-symbols-outlined">pending</p>
+            <p id = ${i} class="delete material-symbols-outlined">delete</p>`
 
             if (task.importance === '3') {
                 li.style.color = '#FF5555'
