@@ -21,6 +21,7 @@ body {
   height: 100vh;
   user-select: none;
   overflow: scroll;
+  scrollbar-width: 0px; /* This will make scroll bar invisible */
 }
 
 section#create_task {
@@ -117,11 +118,13 @@ main {
   padding: 2rem;
   margin: 2rem 0;
   overflow: scroll;
+  scrollbar-width: 0px;
 }
 
 main section{
   height: 80%;
   overflow: scroll;
+  scrollbar-width: 0px;
 }
 
 .Task_list {
