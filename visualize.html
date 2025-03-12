@@ -385,7 +385,65 @@
         <div class="notification">
             <p class="notification-title">Task Reminder</p>
             <p id="notification-message"></p>
-            <button id="dismiss-notification">Dismiss</button>
+            <div class="notification-buttons">
+                <button id="dismiss-notification">Dismiss</button>
+                <button id="notification-help" class="help-button">How to Enable</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification help modal -->
+    <div id="notification-help-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>How to Enable Notifications</h3>
+            <div class="browser-tabs">
+                <button class="browser-tab active" data-browser="chrome">Chrome</button>
+                <button class="browser-tab" data-browser="firefox">Firefox</button>
+                <button class="browser-tab" data-browser="safari">Safari</button>
+                <button class="browser-tab" data-browser="edge">Edge</button>
+            </div>
+            <div class="browser-content">
+                <div class="browser-instructions" id="chrome-instructions">
+                    <ol>
+                        <li>Click the lock icon (or info icon) in the address bar</li>
+                        <li>Click on "Notifications" in the dropdown</li>
+                        <li>Select "Allow" from the options</li>
+                        <li>Refresh the page</li>
+                    </ol>
+                    <img src="images/chrome-notifications.png" alt="Chrome notification settings" class="help-image">
+                </div>
+                <div class="browser-instructions hidden" id="firefox-instructions">
+                    <ol>
+                        <li>Click the lock icon in the address bar</li>
+                        <li>Click on "Connection Secure" or site information</li>
+                        <li>Click "More Information" if needed</li>
+                        <li>Find "Permissions" and set "Receive Notifications" to "Allow"</li>
+                        <li>Refresh the page</li>
+                    </ol>
+                    <img src="images/firefox-notifications.png" alt="Firefox notification settings" class="help-image">
+                </div>
+                <div class="browser-instructions hidden" id="safari-instructions">
+                    <ol>
+                        <li>Click Safari in the menu bar</li>
+                        <li>Select "Preferences" or "Settings"</li>
+                        <li>Go to "Websites" tab</li>
+                        <li>Select "Notifications" from the left sidebar</li>
+                        <li>Find this website and select "Allow"</li>
+                        <li>Refresh the page</li>
+                    </ol>
+                    <img src="images/safari-notifications.png" alt="Safari notification settings" class="help-image">
+                </div>
+                <div class="browser-instructions hidden" id="edge-instructions">
+                    <ol>
+                        <li>Click the lock icon in the address bar</li>
+                        <li>Click "Site permissions"</li>
+                        <li>Find "Notifications" and set to "Allow"</li>
+                        <li>Refresh the page</li>
+                    </ol>
+                    <img src="images/edge-notifications.png" alt="Edge notification settings" class="help-image">
+                </div>
+            </div>
         </div>
     </div>
 

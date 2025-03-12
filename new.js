@@ -16,6 +16,10 @@ let menuToggle = document.querySelector('.menu-toggle');
 let mobileSidebar = document.querySelector('.mobile-sidebar');
 let closeSidebarBtn = document.querySelector('.mobile-sidebar .close-btn');
 let sidebarContent = document.querySelector('.mobile-sidebar-content');
+let notificationHelpBtn = document.getElementById('notification-help');
+let notificationHelpModal = document.getElementById('notification-help-modal');
+let closeModalBtn = document.querySelector('.close-modal');
+let browserTabs = document.querySelectorAll('.browser-tab');
 
 // Custom notification sounds
 const notificationSounds = {
@@ -884,6 +888,54 @@ function getDeletedTasks() {
     return tasks;
 }
 
+// Show notification help modal
+function showNotificationHelpModal() {
+    notificationHelpModal.classList.remove('hidden');
+    document.body.classList.add('overlay');
+}
+
+// Hide notification help modal
+function hideNotificationHelpModal() {
+    notificationHelpModal.classList.add('hidden');
+    document.body.classList.remove('overlay');
+}
+
+// Switch browser tab in help modal
+function switchBrowserTab(browser) {
+    // Hide all instruction divs
+    document.querySelectorAll('.browser-instructions').forEach(div => {
+        div.classList.add('hidden');
+    });
+    
+    // Show selected browser instructions
+    document.getElementById(`${browser}-instructions`).classList.remove('hidden');
+    
+    // Update active tab
+    browserTabs.forEach(tab => {
+        if (tab.dataset.browser === browser) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+}
+
+// Detect user's browser and show appropriate instructions
+function detectBrowser() {
+    const userAgent = navigator.userAgent;
+    let browser = 'chrome'; // Default
+    
+    if (userAgent.indexOf('Firefox') > -1) {
+        browser = 'firefox';
+    } else if (userAgent.indexOf('Safari') > -1 && userAgent.indexOf('Chrome') === -1) {
+        browser = 'safari';
+    } else if (userAgent.indexOf('Edg') > -1) {
+        browser = 'edge';
+    }
+    
+    switchBrowserTab(browser);
+}
+
 window.onload = function() {
     document.getElementsByClassName('task_list')[0].hidden = false;
     rendertask();
@@ -952,5 +1004,31 @@ window.onload = function() {
             checkbox.dispatchEvent(event);
         });
     }
+    
+    // Set up notification help modal
+    if (notificationHelpBtn) {
+        notificationHelpBtn.addEventListener('click', function() {
+            showNotificationHelpModal();
+            detectBrowser(); // Auto-select the user's browser tab
+        });
+    }
+    
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', hideNotificationHelpModal);
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(e) {
+        if (e.target === notificationHelpModal) {
+            hideNotificationHelpModal();
+        }
+    });
+    
+    // Set up browser tabs in help modal
+    browserTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            switchBrowserTab(this.dataset.browser);
+        });
+    });
 }
 
