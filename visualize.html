@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Visualize Tasks</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo 32px.png">
+    <style>
+        /* Visualization specific styles */
+        .visualization-container {
+            width: 85%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            background-color: var(--card-bg);
+            border-radius: 1.6rem;
+            box-shadow: 0 0.8rem 2.4rem var(--shadow);
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .visualization-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .visualization-header h2 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            color: var(--header-color);
+        }
+
+        .visualization-filters {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.8rem 1.6rem;
+            border: none;
+            border-radius: 0.8rem;
+            background-color: var(--form-bg);
+            color: var(--text);
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background-color: var(--accent);
+            color: var(--bg);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background-color: var(--input-bg);
+        }
+
+        .clock-container {
+            position: relative;
+            width: 60rem;
+            height: 60rem;
+            max-width: 90vw;
+            max-height: 90vw;
+            margin: 0 auto;
+        }
+
+        .clock {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--form-bg);
+            box-shadow: 0 0.8rem 2.4rem var(--shadow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .clock::before {
+            content: '';
+            position: absolute;
+            width: 95%;
+            height: 95%;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--card-bg) 0%, var(--form-bg) 100%);
+            z-index: 1;
+        }
+
+        .clock-center {
+            position: absolute;
+            width: 6rem;
+            height: 6rem;
+            background: radial-gradient(circle, var(--accent) 0%, var(--accent-hover) 100%);
+            border-radius: 50%;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--bg);
+            font-size: 1.4rem;
+            font-weight: bold;
+            box-shadow: 0 0 1rem rgba(0, 0, 0, 0.3);
+        }
+
+        .time-ring {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .outer-ring {
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(var(--accent-rgb), 0.3);
+        }
+
+        .middle-ring {
+            width: 75%;
+            height: 75%;
+            border: 2px solid rgba(var(--accent-rgb), 0.2);
+        }
+
+        .inner-ring {
+            width: 50%;
+            height: 50%;
+            border: 1px solid rgba(var(--accent-rgb), 0.1);
+        }
+
+        .task-marker {
+            position: absolute;
+            width: 1.8rem;
+            height: 1.8rem;
+            background-color: var(--form-bg);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+
+        .task-marker:hover {
+            transform: scale(1.3);
+            z-index: 6;
+        }
+
+        .task-marker.priority-low {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        .task-marker.priority-medium {
+            background-color: var(--warning);
+            border-color: var(--warning);
+        }
+
+        .task-marker.priority-high {
+            background-color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .task-marker.target-task {
+            width: 2.4rem;
+            height: 2.4rem;
+            z-index: 7;
+            box-shadow: 0 0 1.5rem var(--accent);
+            animation: pulseTarget 2s infinite;
+        }
+
+        @keyframes pulseTarget {
+            0% {
+                box-shadow: 0 0 0.5rem var(--accent);
+            }
+            50% {
+                box-shadow: 0 0 2rem var(--accent);
+            }
+            100% {
+                box-shadow: 0 0 0.5rem var(--accent);
+            }
+        }
+
+        .task-tooltip {
+            position: absolute;
+            background-color: var(--form-bg);
+            border-radius: 0.8rem;
+            padding: 1rem;
+            box-shadow: 0 0.4rem 1.2rem var(--shadow);
+            width: 18rem;
+            z-index: 20;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .task-marker:hover .task-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .task-tooltip h4 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .task-tooltip p {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .time-needle {
+            position: absolute;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-hover) 0%, var(--accent) 100%);
+            transform-origin: left center;
+            left: 50%;
+            top: 50%;
+            z-index: 4;
+            transition: transform 1s linear;
+            border-radius: 1px;
+            box-shadow: 0 0 5px var(--accent);
+        }
+
+        .time-needle::after {
+            content: '';
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            background-color: var(--accent);
+            border-radius: 50%;
+            right: -0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .time-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+        }
+
+        .time-label {
+            position: absolute;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .current-time-display {
+            position: absolute;
+            bottom: -4rem;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-align: center;
+            width: 100%;
+        }
+
+        .target-task-info {
+            position: absolute;
+            top: -4rem;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-align: center;
+            width: 100%;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-ticks {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        .tick {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background-color: rgba(var(--accent-rgb), 0.5);
+            transform-origin: center bottom;
+            left: 50%;
+            top: 0;
+        }
+
+        .tick.major {
+            height: 15px;
+            width: 3px;
+            background-color: rgba(var(--accent-rgb), 0.8);
+        }
+
+        @media (max-width: 700px) {
+            .visualization-header {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .clock-container {
+                width: 40rem;
+                height: 40rem;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .visualization-filters {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .clock-container {
+                width: 30rem;
+                height: 30rem;
+            }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="material-symbols-outlined">task_alt</span>
+                <h1>TaskFlow</h1>
+            </div>
+            <div class="nav-right">
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li class="active"><a href="visualize.html">Visualize Tasks</a></li>
+                </ul>
+                <span id="theme_toggle" title="Switch Theme" class="material-symbols-outlined hover">dark_mode</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Visualization Container -->
+    <div class="visualization-container">
+        <div class="visualization-header">
+            <h2>Task Visualization</h2>
+            <div class="visualization-filters">
+                <button class="filter-btn active" data-filter="today">Today's Tasks</button>
+                <button class="filter-btn" data-filter="day">Day View</button>
+                <button class="filter-btn" data-filter="month">Month View</button>
+                <button class="filter-btn" data-filter="year">Year View</button>
+            </div>
+        </div>
+
+        <div class="clock-container">
+            <div class="target-task-info" id="target-task-info">Next task: None</div>
+            <div class="clock">
+                <div class="time-ring outer-ring"></div>
+                <div class="time-ring middle-ring"></div>
+                <div class="time-ring inner-ring"></div>
+                <div class="time-ticks" id="time-ticks"></div>
+                <div class="time-needle" id="time-needle"></div>
+                <div class="clock-center" id="clock-center">Now</div>
+                <div class="time-labels" id="time-labels"></div>
+                <div id="task-markers"></div>
+                <div class="current-time-display" id="current-time-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification container -->
+    <div id="notification-container" class="hidden">
+        <div class="notification">
+            <p class="notification-title">Task Reminder</p>
+            <p id="notification-message"></p>
+            <button id="dismiss-notification">Dismiss</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024</p>
+    </footer>
+
+    <script src="visualize.js"></script>
+</body>
+</html>

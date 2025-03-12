@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow-Todo List</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo 32px.png">
+</head>
+<body class="dark-theme">
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="material-symbols-outlined">task_alt</span>
+                <h1>TaskFlow</h1>
+            </div>
+            <div class="nav-right">
+                <ul class="nav-links">
+                    <li class="active"><a href="index.html">Home</a></li>
+                    <li><a href="visualize.html">Visualize Tasks</a></li>
+                </ul>
+                <span id="theme_toggle" title="Switch Theme" class="material-symbols-outlined hover">dark_mode</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Form to add tasks. -->
+    <section id = "create_task" hidden>
+        <h2>Add Your Task</h2>
+        <form id="add_task_form">
+            <div>
+                <label for="task_name">Task Name</label>
+                <input type="text" id="task_name" name="task_name" placeholder="Enter what you want to do" required>
+            </div>
+            <div>
+                <label for="deadline">Deadline</label>
+                <input type="datetime-local" id="deadline" name="task_date" required>
+            </div>
+            <div>
+                <label for="importance">How much important</label>
+                 <select name="importance" id="importance">
+                     <option value="1">Just-To-Remember</option>
+                     <option value="2">Slight-Important</option>
+                    <option value="3">Important</option>
+                 </select>
+            </div>
+            <div class="notification-options">
+                <label for="notification_time">Notify me before</label>
+                <div class="notification-time-container">
+                    <input type="number" id="notification_time" name="notification_time" min="1" value="1">
+                    <select id="notification_unit">
+                        <option value="minutes">Minutes</option>
+                        <option value="hours" selected>Hours</option>
+                        <option value="days">Days</option>
+                        <option value="weeks">Weeks</option>
+                    </select>
+                </div>
+            </div>
+            <div class="notification-sound">
+                <label for="notification_sound">Notification Sound</label>
+                <div class="sound-toggle">
+                    <input type="checkbox" id="notification_sound" name="notification_sound" checked>
+                    <span class="slider"></span>
+                </div>
+            </div>
+            <button id="add_task" type="submit">Add Task</button>
+        </form>
+    </section>
+
+    <!-- Main Section -->
+    <main class="Task_list hide_main">
+        <header>
+            <h3>To-Do list</h3>
+        </header>
+
+
+        <!-- Deleted task Section. -->
+        <section class="deleted_task" hidden>
+            <h2>Deleted Tasks</h2>
+            <ul id="task">
+                <li id="header">
+                    <p id="name">Task Name</p>
+                    <p id="end_date">Deadline</p>
+                    <p id="status">Status</p>
+                    <p class="restore">Restore</p>
+                </li>
+            </ul>
+            <ul id="deleted_task"></ul>
+        </section>
+
+
+        <!-- Missed task Section -->
+        <section class="missed_task" hidden>
+            <h2>Missed Tasks</h2>
+            <ul id="task">
+                <li id="header">
+                    <p id="name">Task Name</p>
+                    <p id="end_date">Deadline</p>
+                    <p id="status">Status</p>
+                    <p class="extend_deadline">Extend Deadline</p>
+                    <p class="delete material-symbols-outlined">delete</p>
+                </li>
+            </ul>
+            <ul id="missed_task"></ul>
+        </section>
+
+
+        <!-- Completed task Section -->
+        <section class="completed_task" hidden>
+            <h2>Completed Tasks</h2>
+            <ul id="task">
+                <li id="header">
+                    <p id="name">Task Name</p>
+                    <p id="end_date">Deadline</p>
+                    <p id="status">Status</p>
+                    <p class="pending">Turn out</p>
+                    <p class="delete material-symbols-outlined">delete</p>
+                </li>
+            </ul>
+            <ul id="completed_task"></ul>
+        </section>
+
+
+        <!-- Pending task Section -->
+        <section class="pending_task" hidden>
+            <h2>Pending Tasks</h2>
+            <ul id="task">
+                <li id="header">
+                    <p id="name">Task Name</p>
+                    <p id="end_date">Deadline</p>
+                    <p id="status">Status</p>
+                    <p class = "completed hover_complete material-symbols-outlined">task_alt</p>
+                    <p class="delete material-symbols-outlined">delete</p>
+                </li>
+            </ul>
+            <ul id="pending_task">
+            </ul>
+        </section>
+
+
+        <!-- All Task Section -->
+        <section class="task_list" hidden>
+            <h2>Your Tasks</h2>
+            <ul id="task">
+                <li id="header">
+                    <p id="name">Task Name</p>
+                    <p id="end_date">Deadline</p>
+                    <p id="status">Status</p>
+                    <p class = "completed hover_complete material-symbols-outlined">task_alt</p>
+                    <p class="delete material-symbols-outlined">delete</p>
+                </li>
+            </ul>
+            <ul id="all_task">
+            </ul>
+        </section>
+    </main>
+
+    <!-- form for extending deadline -->
+    <div id="EXTEND" hidden>
+        <h2>Extend Deadline</h2>
+        <p style="display: none;"></p>
+        <form id="extend_deadline_form">
+            <label for="Extend_Deadline"></label>
+            <input type="datetime-local" id="Extend_Deadline" required>
+            <button type="submit">Extend it</button>
+        </form>
+    </div>
+
+    <!-- Menu bar -->
+    <div class="menu hover">
+        <p id = "home" title="All Tasks" class="material-symbols-outlined">home</p>
+        <p id = 'delete' title="Deleted Tasks" class="material-symbols-outlined hover">delete</p>
+        <p id = 'missed' title="Missed Tasks" class="material-symbols-outlined hover">assignment_late</p>
+        <p id = 'completed' title="Completed Tasks" class="material-symbols-outlined hover">assignment_turned_in</p>
+        <p id="pending" title="Incomplete Task" class="material-symbols-outlined hover">priority_high</p>
+    </div>
+    
+    <!-- To oppen add task form -->
+    <div class="add">
+        <p class="material-symbols-outlined">add</p>
+    </div>
+
+    <!-- Notification container -->
+    <div id="notification-container" class="hidden">
+        <div class="notification">
+            <p class="notification-title">Task Reminder</p>
+            <p id="notification-message"></p>
+            <button id="dismiss-notification">Dismiss</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024</p>
+    </footer>
+    <script src="new.js"></script>
+</body>
+</html>
+
+
