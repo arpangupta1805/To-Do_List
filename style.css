@@ -470,6 +470,7 @@ ul p {
   word-break: break-word;
 }
 
+
 .completed, .delete, .restore, .pending, .extend_deadline {
   cursor: pointer;
   font-size: 2.4rem;
@@ -569,7 +570,6 @@ ul p {
 
 /* Mobile sidebar */
 .mobile-sidebar {
-  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -581,6 +581,7 @@ ul p {
   overflow-x: hidden;
   transition: width 0.3s ease;
   padding-top: 6rem;
+  display: block; /* Ensure it's always displayed */
 }
 
 .mobile-sidebar.open {
@@ -1016,71 +1017,6 @@ ul p {
   .modal-content {
     padding: 1.5rem;
     width: 95%;
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 900px) {
-  main {
-    width: 95%;
-    padding: 2rem;
-  }
-  
-  main section ul li {
-    grid-template-columns: 2fr 2fr 2fr 1fr 1fr;
-    padding: 1.5rem 1rem;
-  }
-  
-  ul p {
-    font-size: 1.4rem;
-  }
-  
-  .completed, .delete, .restore, .pending, .extend_deadline {
-    font-size: 2rem;
-  }
-  
-  .menu {
-    left: 1rem;
-  }
-  
-  .menu p {
-    font-size: 2rem;
-    width: 4rem;
-    height: 4rem;
-  }
-}
-
-@media (max-width: 600px) {
-  main section ul li {
-    grid-template-columns: 1fr 1fr 1fr 0.5fr 0.5fr;
-    font-size: 1.2rem;
-    padding: 1.2rem 0.8rem;
-  }
-  
-  ul p {
-    font-size: 1.2rem;
-  }
-  
-    #name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    }
-  
-    #end_date {
-    font-size: 1.1rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-    #status {
-    font-size: 1.1rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .completed, .delete, .restore, .pending, .extend_deadline {
-    font-size: 1.8rem;
   }
   
   .menu {

@@ -239,8 +239,8 @@ function rendertask() {
             li.innerHTML = `<p id="name">${task.task_name}</p>
             <p id="end_date">${task.deadline}</p>
             <p id="status">${task.task_status}</p>
-            <p id = ${i} class = "completed  hover_complete material-symbols-outlined">task_alt</p>
-            <p id = ${i} class="delete material-symbols-outlined">delete</p>`
+            <p id = ${i} class = "completed  hover_complete material-symbols-outlined" title="Mark as completed">task_alt</p>
+            <p id = ${i} class="delete material-symbols-outlined" title="Delete task">delete</p>`
             if (task.importance === '3') {
                 li.style.color = '#FF5555'
             }
@@ -276,7 +276,7 @@ function render_deletedtask(){
             li.innerHTML = `<p id="name">${task.task_name}</p>
             <p id="end_date">${task.deadline}</p>
             <p id="status">${task.task_status}</p>
-            <p id ='${i}' class="restore material-symbols-outlined">restore_from_trash</p>` /////////////////////////////////
+            <p id ='${i}' class="restore material-symbols-outlined" title="Restore task">restore_from_trash</p>` 
             if (task.importance === '3') {
                 li.style.color = '#FF5555'
             }
@@ -304,8 +304,8 @@ function render_missedtask() {
             li.innerHTML = `<p id="name">${task.task_name}</p>
             <p id="end_date">${task.deadline}</p>
             <p id="status">${task.task_status}</p>
-            <p id = ${i} class="extend_deadline material-symbols-outlined">more_time</p>
-            <p id = ${i} class="delete material-symbols-outlined">delete</p>`
+            <p id = ${i} class="extend_deadline material-symbols-outlined" title="Extend deadline">more_time</p>
+            <p id = ${i} class="delete material-symbols-outlined" title="Delete task">delete</p>`
             if (task.importance === '3') {
                 li.style.color = '#FF5555'
             }
@@ -367,8 +367,8 @@ function render_completedtask() {
             li.innerHTML = `<p id="name">${task.task_name}</p>
             <p id="end_date">${task.deadline}</p>
             <p id="status">${task.task_status}</p>
-            <p id = ${i} class="pending material-symbols-outlined">pending</p>
-            <p id = ${i} class="delete material-symbols-outlined">delete</p>`
+            <p id = ${i} class="pending material-symbols-outlined" title="Mark as pending">pending</p>
+            <p id = ${i} class="delete material-symbols-outlined" title="Delete task">delete</p>`
 
             if (task.importance === '3') {
                 li.style.color = '#FF5555'
@@ -647,57 +647,69 @@ document.getElementById('pending_task').addEventListener('click', function (e) {
     }
 });
 
-// for interactivity in left navigation bar 
+// Helper function to show a specific task section
+function showTaskSection(section) {
+    console.log('Showing task section:', section);
+    // Hide all sections first
+    create.hidden = true;
+    document.getElementsByClassName('deleted_task')[0].hidden = true;
+    document.getElementsByClassName('task_list')[0].hidden = true;
+    document.getElementsByClassName('missed_task')[0].hidden = true;
+    document.getElementsByClassName('pending_task')[0].hidden = true;
+    document.getElementsByClassName('completed_task')[0].hidden = true;
+    extenddeadlineform_container.hidden = true;
+    
+    // Show the main container
+    main[0].hidden = false;
+    
+    // Show the requested section
+    switch(section) {
+        case 'all':
+            document.getElementsByClassName('task_list')[0].hidden = false;
+            rendertask();
+            break;
+        case 'deleted':
+            document.getElementsByClassName('deleted_task')[0].hidden = false;
+            render_deletedtask();
+            break;
+        case 'missed':
+            document.getElementsByClassName('missed_task')[0].hidden = false;
+            render_missedtask();
+            break;
+        case 'pending':
+            document.getElementsByClassName('pending_task')[0].hidden = false;
+            render_pendingtask();
+            break;
+        case 'completed':
+            document.getElementsByClassName('completed_task')[0].hidden = false;
+            render_completedtask();
+            break;
+    }
+    
+    // Remove overlay
+    document.body.classList.remove('overlay');
+}
+
+// Update the menu event listener to use the new helper function
 document.getElementsByClassName('menu')[0].addEventListener('click', function(e) {
     if (e.target.id === 'delete') {
-        render_deletedtask();
-        create.hidden = true;
-        document.getElementsByClassName('deleted_task')[0].hidden = false;
-        document.getElementsByClassName('task_list')[0].hidden = true;
-        document.getElementsByClassName('missed_task')[0].hidden = true;
-        document.getElementsByClassName('pending_task')[0].hidden = true;
-        document.getElementsByClassName('completed_task')[0].hidden = true;
-        main[0].hidden = false;
-        extenddeadlineform_container.hidden = true;
-        document.body.classList.remove('overlay');
+        showTaskSection('deleted');
     }
 
     if (e.target.id === 'missed') {
-        render_missedtask();
-        create.hidden = true;
-        document.getElementsByClassName('deleted_task')[0].hidden = true;
-        document.getElementsByClassName('task_list')[0].hidden = true;
-        document.getElementsByClassName('missed_task')[0].hidden = false;
-        document.getElementsByClassName('pending_task')[0].hidden = true;
-        document.getElementsByClassName('completed_task')[0].hidden = true;
-        main[0].hidden = false;
-        extenddeadlineform_container.hidden = true;
-        document.body.classList.remove('overlay');
+        showTaskSection('missed');
     }
 
     if (e.target.id === 'completed') {
-        render_completedtask();
-        create.hidden = true;
-        document.getElementsByClassName('deleted_task')[0].hidden = true;
-        document.getElementsByClassName('task_list')[0].hidden = true;
-        document.getElementsByClassName('missed_task')[0].hidden = true;
-        document.getElementsByClassName('pending_task')[0].hidden = true;
-        document.getElementsByClassName('completed_task')[0].hidden = false;
-        main[0].hidden = false;
-        extenddeadlineform_container.hidden = true;
-        document.body.classList.remove('overlay');
+        showTaskSection('completed');
     }
+    
     if (e.target.id === 'pending') {
-        render_pendingtask();
-        create.hidden = true;
-        document.getElementsByClassName('deleted_task')[0].hidden = true;
-        document.getElementsByClassName('task_list')[0].hidden = true;
-        document.getElementsByClassName('missed_task')[0].hidden = true;
-        document.getElementsByClassName('pending_task')[0].hidden = false;
-        document.getElementsByClassName('completed_task')[0].hidden = true;
-        main[0].hidden = false;
-        extenddeadlineform_container.hidden = true;
-        document.body.classList.remove('overlay');
+        showTaskSection('pending');
+    }
+    
+    if (e.target.id === 'home') {
+        showTaskSection('all');
     }
     
     if (e.target.id === 'theme_toggle') {
@@ -705,18 +717,9 @@ document.getElementsByClassName('menu')[0].addEventListener('click', function(e)
     }
 })
 
-
+// Update the home click event to use the helper function
 home.addEventListener('click', function() {
-    rendertask();
-    create.hidden = true;
-    document.getElementsByClassName('deleted_task')[0].hidden = true;
-    document.getElementsByClassName('task_list')[0].hidden = false;
-    document.getElementsByClassName('missed_task')[0].hidden = true;
-    document.getElementsByClassName('pending_task')[0].hidden = true;
-    document.getElementsByClassName('completed_task')[0].hidden = true;
-    main[0].hidden = false;
-    extenddeadlineform_container.hidden = true;
-    document.body.classList.remove('overlay');
+    showTaskSection('all');
 })
 
 add.addEventListener('click', function() {
@@ -742,12 +745,15 @@ dismissNotification.addEventListener('click', function() {
 
 // Toggle mobile sidebar
 function toggleMobileSidebar() {
+    console.log('Toggling mobile sidebar');
     mobileSidebar.classList.toggle('open');
     document.body.classList.toggle('overlay');
+    console.log('Mobile sidebar open:', mobileSidebar.classList.contains('open'));
 }
 
 // Close mobile sidebar
 function closeMobileSidebar() {
+    console.log('Closing mobile sidebar');
     mobileSidebar.classList.remove('open');
     document.body.classList.remove('overlay');
 }
@@ -820,22 +826,28 @@ function createTaskListPreview(title, icon, tasks) {
     viewAllBtn.textContent = 'View All';
     viewAllBtn.dataset.type = icon;
     viewAllBtn.addEventListener('click', function() {
+        console.log('View All button clicked with type:', this.dataset.type);
         // Handle click based on task type
         switch(this.dataset.type) {
             case 'home':
-                render_alltask();
+                console.log('Showing all tasks');
+                showTaskSection('all');
                 break;
             case 'priority_high':
-                render_pendingtask();
+                console.log('Showing pending tasks');
+                showTaskSection('pending');
                 break;
             case 'assignment_turned_in':
-                render_completedtask();
+                console.log('Showing completed tasks');
+                showTaskSection('completed');
                 break;
             case 'assignment_late':
-                render_missedtask();
+                console.log('Showing missed tasks');
+                showTaskSection('missed');
                 break;
             case 'delete':
-                render_deletedtask();
+                console.log('Showing deleted tasks');
+                showTaskSection('deleted');
                 break;
         }
         

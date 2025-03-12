@@ -176,6 +176,45 @@ function createTaskListPreview(title, icon, tasks) {
     
     preview.appendChild(list);
     
+    // Create view all button if there are tasks
+    if (tasks.length > 0) {
+        const viewAllBtn = document.createElement('div');
+        viewAllBtn.className = 'view-all-btn';
+        viewAllBtn.textContent = 'View All';
+        viewAllBtn.dataset.type = icon;
+        
+        viewAllBtn.addEventListener('click', function() {
+            // Update filter buttons based on task type
+            switch(this.dataset.type) {
+                case 'today':
+                    // Set filter to today's tasks
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        if (btn.dataset.filter === 'today') {
+                            btn.click();
+                        }
+                    });
+                    break;
+                case 'event_upcoming':
+                    // Set filter to day view for upcoming tasks
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        if (btn.dataset.filter === 'day') {
+                            btn.click();
+                        }
+                    });
+                    break;
+                case 'priority_high':
+                    // Keep current filter but highlight high priority tasks
+                    // This could be enhanced with additional functionality
+                    break;
+            }
+            
+            // Close sidebar
+            closeMobileSidebar();
+        });
+        
+        preview.appendChild(viewAllBtn);
+    }
+    
     // Add preview to sidebar
     sidebarContent.appendChild(preview);
 }
