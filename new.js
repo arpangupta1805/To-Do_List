@@ -8,9 +8,14 @@ let deletebtn = document.querySelectorAll('.delete');
 let extenddeadlineform = document.getElementById('extend_deadline_form')
 let extenddeadlineform_container = document.getElementById('EXTEND')
 let themeToggle = document.getElementById('theme_toggle');
+let notificationToggle = document.getElementById('notification_toggle');
 let notificationContainer = document.getElementById('notification-container');
 let notificationMessage = document.getElementById('notification-message');
 let dismissNotification = document.getElementById('dismiss-notification');
+let menuToggle = document.querySelector('.menu-toggle');
+let mobileSidebar = document.querySelector('.mobile-sidebar');
+let closeSidebarBtn = document.querySelector('.mobile-sidebar .close-btn');
+let sidebarContent = document.querySelector('.mobile-sidebar-content');
 
 // Custom notification sounds
 const notificationSounds = {
@@ -117,6 +122,11 @@ function updateCurrentTime() {
 
 // Check for upcoming task notifications
 function checkNotifications(now) {
+    // Skip if notifications are disabled
+    if (localStorage.getItem('notifications_enabled') === 'false') {
+        return;
+    }
+    
     let tasks = getLocalStorage();
     tasks.forEach(task => {
         if (!task.isDeleted && task.task_status !== 'Completed' && task.task_status !== 'Missed') {
@@ -370,6 +380,68 @@ function render_completedtask() {
     });
 }
 
+// Toggle notification permission
+function toggleNotificationPermission() {
+    if (!('Notification' in window)) {
+        showNotification('Notifications are not supported in this browser', '1');
+        return;
+    }
+    
+    if (Notification.permission === 'granted') {
+        // Can't revoke permission once granted, but we can disable notifications in our app
+        const notificationsEnabled = localStorage.getItem('notifications_enabled') !== 'false';
+        localStorage.setItem('notifications_enabled', notificationsEnabled ? 'false' : 'true');
+        updateNotificationToggleIcon();
+        
+        showNotification(
+            notificationsEnabled ? 'Notifications disabled' : 'Notifications enabled', 
+            '2'
+        );
+    } else if (Notification.permission === 'denied') {
+        showNotification('Notification permission was denied. Please enable notifications in your browser settings.', '2');
+    } else {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                localStorage.setItem('notifications_enabled', 'true');
+                updateNotificationToggleIcon();
+                showNotification('Notifications enabled!', '2');
+            } else {
+                localStorage.setItem('notifications_enabled', 'false');
+                updateNotificationToggleIcon();
+                showNotification('Notification permission denied', '1');
+            }
+        });
+    }
+}
+
+// Update notification toggle icon based on current permission state
+function updateNotificationToggleIcon() {
+    if (!notificationToggle) return;
+    
+    if (!('Notification' in window)) {
+        notificationToggle.textContent = 'notifications_off';
+        notificationToggle.classList.add('disabled');
+        notificationToggle.classList.remove('enabled');
+        return;
+    }
+    
+    const notificationsEnabled = Notification.permission === 'granted' && 
+                                localStorage.getItem('notifications_enabled') !== 'false';
+    
+    if (notificationsEnabled) {
+        notificationToggle.textContent = 'notifications_active';
+        notificationToggle.classList.add('enabled');
+        notificationToggle.classList.remove('disabled');
+    } else if (Notification.permission === 'denied') {
+        notificationToggle.textContent = 'notifications_off';
+        notificationToggle.classList.add('disabled');
+        notificationToggle.classList.remove('enabled');
+    } else {
+        notificationToggle.textContent = 'notifications';
+        notificationToggle.classList.remove('enabled', 'disabled');
+    }
+}
+
 // Add task form
 document.getElementById('add_task_form').addEventListener('submit', function(e) {
     let i = getLocalStorage().length;
@@ -398,7 +470,7 @@ document.getElementById('add_task_form').addEventListener('submit', function(e) 
     }));
     
     // Save notification sound preference globally
-    localStorage.setItem('notification_sound', notification_sound);
+    localStorage.setItem('notification_sound', notification_sound.toString());
     
     document.getElementById('add_task_form').reset();
     rendertask();
@@ -664,6 +736,154 @@ dismissNotification.addEventListener('click', function() {
     notificationContainer.classList.add('hidden');
 });
 
+// Toggle mobile sidebar
+function toggleMobileSidebar() {
+    mobileSidebar.classList.toggle('open');
+    document.body.classList.toggle('overlay');
+}
+
+// Close mobile sidebar
+function closeMobileSidebar() {
+    mobileSidebar.classList.remove('open');
+    document.body.classList.remove('overlay');
+}
+
+// Populate mobile sidebar with task previews
+function populateMobileSidebar() {
+    // Clear existing content
+    sidebarContent.innerHTML = '';
+    
+    // Create task list previews
+    createTaskListPreview('All Tasks', 'home', getAllTasks().slice(0, 3));
+    createTaskListPreview('Pending Tasks', 'priority_high', getPendingTasks().slice(0, 3));
+    createTaskListPreview('Completed Tasks', 'assignment_turned_in', getCompletedTasks().slice(0, 3));
+    createTaskListPreview('Missed Tasks', 'assignment_late', getMissedTasks().slice(0, 3));
+    createTaskListPreview('Deleted Tasks', 'delete', getDeletedTasks().slice(0, 3));
+}
+
+// Create a task list preview section
+function createTaskListPreview(title, icon, tasks) {
+    const preview = document.createElement('div');
+    preview.className = 'task-list-preview';
+    
+    // Create header
+    const header = document.createElement('h4');
+    header.innerHTML = `<span class="material-symbols-outlined">${icon}</span>${title}`;
+    preview.appendChild(header);
+    
+    // Create task list
+    const list = document.createElement('ul');
+    
+    if (tasks.length === 0) {
+        const emptyItem = document.createElement('li');
+        emptyItem.textContent = 'No tasks';
+        list.appendChild(emptyItem);
+    } else {
+        tasks.forEach(task => {
+            const item = document.createElement('li');
+            
+            // Create priority indicator
+            const priorityIndicator = document.createElement('span');
+            priorityIndicator.className = 'task-priority';
+            
+            if (task.importance === '3') {
+                priorityIndicator.classList.add('priority-high');
+            } else if (task.importance === '2') {
+                priorityIndicator.classList.add('priority-medium');
+            } else {
+                priorityIndicator.classList.add('priority-low');
+            }
+            
+            // Create task name
+            const taskName = document.createElement('span');
+            taskName.className = 'task-name';
+            taskName.textContent = task.task_name;
+            
+            // Add elements to item
+            item.appendChild(priorityIndicator);
+            item.appendChild(taskName);
+            
+            // Add item to list
+            list.appendChild(item);
+        });
+    }
+    
+    preview.appendChild(list);
+    
+    // Create view all button
+    const viewAllBtn = document.createElement('div');
+    viewAllBtn.className = 'view-all-btn';
+    viewAllBtn.textContent = 'View All';
+    viewAllBtn.dataset.type = icon;
+    viewAllBtn.addEventListener('click', function() {
+        // Handle click based on task type
+        switch(this.dataset.type) {
+            case 'home':
+                render_alltask();
+                break;
+            case 'priority_high':
+                render_pendingtask();
+                break;
+            case 'assignment_turned_in':
+                render_completedtask();
+                break;
+            case 'assignment_late':
+                render_missedtask();
+                break;
+            case 'delete':
+                render_deletedtask();
+                break;
+        }
+        
+        // Close sidebar
+        closeMobileSidebar();
+    });
+    
+    preview.appendChild(viewAllBtn);
+    
+    // Add preview to sidebar
+    sidebarContent.appendChild(preview);
+}
+
+// Helper functions to get different task types
+function getAllTasks() {
+    const tasks = [];
+    let i = 0;
+    while (localStorage.getItem(`task-${i}`)) {
+        const task = JSON.parse(localStorage.getItem(`task-${i}`));
+        if (!task.isDeleted) {
+            tasks.push(task);
+        }
+        i++;
+    }
+    return tasks;
+}
+
+function getPendingTasks() {
+    return getAllTasks().filter(task => task.task_status === 'Pending');
+}
+
+function getCompletedTasks() {
+    return getAllTasks().filter(task => task.task_status === 'Completed');
+}
+
+function getMissedTasks() {
+    return getAllTasks().filter(task => task.task_status === 'Missed');
+}
+
+function getDeletedTasks() {
+    const tasks = [];
+    let i = 0;
+    while (localStorage.getItem(`task-${i}`)) {
+        const task = JSON.parse(localStorage.getItem(`task-${i}`));
+        if (task.isDeleted) {
+            tasks.push(task);
+        }
+        i++;
+    }
+    return tasks;
+}
+
 window.onload = function() {
     document.getElementsByClassName('task_list')[0].hidden = false;
     rendertask();
@@ -676,7 +896,61 @@ window.onload = function() {
     // Set default values for notification form
     const savedSound = localStorage.getItem('notification_sound');
     if (savedSound !== null) {
-        document.getElementById('notification_sound').checked = savedSound === 'true';
+        const soundToggle = document.getElementById('notification_sound');
+        if (soundToggle) {
+            soundToggle.checked = savedSound === 'true';
+        }
+    }
+    
+    // Initialize notification permission state
+    if (localStorage.getItem('notifications_enabled') === null) {
+        localStorage.setItem('notifications_enabled', Notification.permission === 'granted' ? 'true' : 'false');
+    }
+    updateNotificationToggleIcon();
+    
+    // Add direct event listener for theme toggle
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+    
+    // Add event listener for notification toggle
+    if (notificationToggle) {
+        notificationToggle.addEventListener('click', toggleNotificationPermission);
+    }
+    
+    // Set up mobile menu
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
+            populateMobileSidebar();
+            toggleMobileSidebar();
+        });
+    }
+    
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', closeMobileSidebar);
+    }
+    
+    // Close sidebar when clicking outside
+    document.addEventListener('click', function(e) {
+        if (mobileSidebar.classList.contains('open') && 
+            !mobileSidebar.contains(e.target) && 
+            e.target !== menuToggle && 
+            !menuToggle.contains(e.target)) {
+            closeMobileSidebar();
+        }
+    });
+    
+    // Fix notification slider in add task form
+    const notificationSlider = document.querySelector('.sound-toggle .slider');
+    if (notificationSlider) {
+        notificationSlider.addEventListener('click', function() {
+            const checkbox = this.previousElementSibling;
+            checkbox.checked = !checkbox.checked;
+            
+            // Trigger change event
+            const event = new Event('change');
+            checkbox.dispatchEvent(event);
+        });
     }
 }
 

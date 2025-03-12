@@ -11,6 +11,11 @@ const notificationContainer = document.getElementById('notification-container');
 const notificationMessage = document.getElementById('notification-message');
 const dismissNotification = document.getElementById('dismiss-notification');
 const themeToggle = document.getElementById('theme_toggle');
+const notificationToggle = document.getElementById('notification_toggle');
+const menuToggle = document.querySelector('.menu-toggle');
+const mobileSidebar = document.querySelector('.mobile-sidebar');
+const closeSidebarBtn = document.querySelector('.mobile-sidebar .close-btn');
+const sidebarContent = document.querySelector('.mobile-sidebar-content');
 
 // Variables
 let currentFilter = 'today';
@@ -47,6 +52,159 @@ function toggleTheme() {
     }
 }
 
+// Toggle mobile sidebar
+function toggleMobileSidebar() {
+    mobileSidebar.classList.toggle('open');
+    document.body.classList.toggle('overlay');
+}
+
+// Close mobile sidebar
+function closeMobileSidebar() {
+    mobileSidebar.classList.remove('open');
+    document.body.classList.remove('overlay');
+}
+
+// Populate mobile sidebar with task previews
+function populateMobileSidebar() {
+    // Clear existing content
+    sidebarContent.innerHTML = '';
+    
+    // Create task list previews
+    createTaskListPreview('Today\'s Tasks', 'today', getTasksForToday());
+    createTaskListPreview('Upcoming Tasks', 'event_upcoming', getUpcomingTasks());
+    createTaskListPreview('High Priority', 'priority_high', getHighPriorityTasks());
+    
+    // Add visualization filters
+    const filtersSection = document.createElement('div');
+    filtersSection.className = 'task-list-preview';
+    
+    const filtersHeader = document.createElement('h4');
+    filtersHeader.innerHTML = '<span class="material-symbols-outlined">filter_list</span>View Filters';
+    filtersSection.appendChild(filtersHeader);
+    
+    const filtersList = document.createElement('div');
+    filtersList.className = 'sidebar-filters';
+    
+    const filters = [
+        { name: 'Today\'s Tasks', value: 'today' },
+        { name: 'Day View', value: 'day' },
+        { name: 'Month View', value: 'month' },
+        { name: 'Year View', value: 'year' }
+    ];
+    
+    filters.forEach(filter => {
+        const filterBtn = document.createElement('div');
+        filterBtn.className = 'sidebar-filter-btn';
+        if (currentFilter === filter.value) {
+            filterBtn.classList.add('active');
+        }
+        filterBtn.textContent = filter.name;
+        filterBtn.dataset.filter = filter.value;
+        
+        filterBtn.addEventListener('click', function() {
+            // Update filter buttons in the main view
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === this.dataset.filter) {
+                    btn.click();
+                }
+            });
+            
+            // Close sidebar
+            closeMobileSidebar();
+        });
+        
+        filtersList.appendChild(filterBtn);
+    });
+    
+    filtersSection.appendChild(filtersList);
+    sidebarContent.appendChild(filtersSection);
+}
+
+// Create a task list preview section
+function createTaskListPreview(title, icon, tasks) {
+    const preview = document.createElement('div');
+    preview.className = 'task-list-preview';
+    
+    // Create header
+    const header = document.createElement('h4');
+    header.innerHTML = `<span class="material-symbols-outlined">${icon}</span>${title}`;
+    preview.appendChild(header);
+    
+    // Create task list
+    const list = document.createElement('ul');
+    
+    if (tasks.length === 0) {
+        const emptyItem = document.createElement('li');
+        emptyItem.textContent = 'No tasks';
+        list.appendChild(emptyItem);
+    } else {
+        // Show only up to 3 tasks
+        const tasksToShow = tasks.slice(0, 3);
+        
+        tasksToShow.forEach(task => {
+            const item = document.createElement('li');
+            
+            // Create priority indicator
+            const priorityIndicator = document.createElement('span');
+            priorityIndicator.className = 'task-priority';
+            
+            if (task.importance === '3') {
+                priorityIndicator.classList.add('priority-high');
+            } else if (task.importance === '2') {
+                priorityIndicator.classList.add('priority-medium');
+            } else {
+                priorityIndicator.classList.add('priority-low');
+            }
+            
+            // Create task name
+            const taskName = document.createElement('span');
+            taskName.className = 'task-name';
+            taskName.textContent = task.task_name;
+            
+            // Add elements to item
+            item.appendChild(priorityIndicator);
+            item.appendChild(taskName);
+            
+            // Add item to list
+            list.appendChild(item);
+        });
+    }
+    
+    preview.appendChild(list);
+    
+    // Add preview to sidebar
+    sidebarContent.appendChild(preview);
+}
+
+// Helper functions to get different task types
+function getTasksForToday() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    return tasks.filter(task => {
+        const taskDate = new Date(task.deadline);
+        return taskDate >= today && taskDate < tomorrow;
+    });
+}
+
+function getUpcomingTasks() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    return tasks.filter(task => {
+        const taskDate = new Date(task.deadline);
+        return taskDate > now && taskDate < nextWeek;
+    }).sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+}
+
+function getHighPriorityTasks() {
+    return tasks.filter(task => task.importance === '3');
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Apply saved theme
@@ -81,6 +239,33 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set up theme toggle
     themeToggle.addEventListener('click', toggleTheme);
+    
+    // Set up notification toggle
+    if (notificationToggle) {
+        notificationToggle.addEventListener('click', toggleNotificationPermission);
+    }
+    
+    // Set up mobile menu
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
+            populateMobileSidebar();
+            toggleMobileSidebar();
+        });
+    }
+    
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', closeMobileSidebar);
+    }
+    
+    // Close sidebar when clicking outside
+    document.addEventListener('click', function(e) {
+        if (mobileSidebar && mobileSidebar.classList.contains('open') && 
+            !mobileSidebar.contains(e.target) && 
+            e.target !== menuToggle && 
+            !menuToggle.contains(e.target)) {
+            closeMobileSidebar();
+        }
+    });
     
     // Initialize visualization
     updateVisualization();
@@ -250,7 +435,7 @@ function visualizeDayTasks() {
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     
     // Update clock center text
-    clockCenter.textContent = 'Month';
+    clockCenter.textContent = 'Days';
     
     // Filter tasks for current month
     const monthTasks = tasks.filter(task => {
@@ -311,7 +496,7 @@ function visualizeMonthTasks() {
     const nextYear = new Date(now.getFullYear() + 1, 0, 1);
     
     // Update clock center text
-    clockCenter.textContent = 'Year';
+    clockCenter.textContent = 'Month';
     
     // Filter tasks for current year
     const yearTasks = tasks.filter(task => {
@@ -370,7 +555,7 @@ function visualizeYearTasks() {
     const currentYear = now.getFullYear();
     
     // Update clock center text
-    clockCenter.textContent = 'Future';
+    clockCenter.textContent = 'Year';
     
     // Filter tasks for next few years
     const futureTasks = tasks.filter(task => {
@@ -854,6 +1039,11 @@ function showNotification(message, importance = '1') {
 
 // Send system notification
 function sendSystemNotification(message, importance) {
+    // Skip if notifications are disabled
+    if (localStorage.getItem('notifications_enabled') === 'false') {
+        return;
+    }
+    
     // Format the notification title with time
     const now = new Date();
     const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -973,11 +1163,91 @@ dismissNotification.addEventListener('click', function() {
     notificationContainer.classList.add('hidden');
 });
 
+// Toggle notification permission
+function toggleNotificationPermission() {
+    if (!('Notification' in window)) {
+        showNotification('Notifications are not supported in this browser', '1');
+        return;
+    }
+    
+    if (Notification.permission === 'granted') {
+        // Can't revoke permission once granted, but we can disable notifications in our app
+        const notificationsEnabled = localStorage.getItem('notifications_enabled') !== 'false';
+        localStorage.setItem('notifications_enabled', notificationsEnabled ? 'false' : 'true');
+        updateNotificationToggleIcon();
+        
+        showNotification(
+            notificationsEnabled ? 'Notifications disabled' : 'Notifications enabled', 
+            '2'
+        );
+    } else if (Notification.permission === 'denied') {
+        showNotification('Notification permission was denied. Please enable notifications in your browser settings.', '2');
+    } else {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                localStorage.setItem('notifications_enabled', 'true');
+                updateNotificationToggleIcon();
+                showNotification('Notifications enabled!', '2');
+            } else {
+                localStorage.setItem('notifications_enabled', 'false');
+                updateNotificationToggleIcon();
+                showNotification('Notification permission denied', '1');
+            }
+        });
+    }
+}
+
+// Update notification toggle icon based on current permission state
+function updateNotificationToggleIcon() {
+    if (!notificationToggle) return;
+    
+    if (!('Notification' in window)) {
+        notificationToggle.textContent = 'notifications_off';
+        notificationToggle.classList.add('disabled');
+        notificationToggle.classList.remove('enabled');
+        return;
+    }
+    
+    const notificationsEnabled = Notification.permission === 'granted' && 
+                                localStorage.getItem('notifications_enabled') !== 'false';
+    
+    if (notificationsEnabled) {
+        notificationToggle.textContent = 'notifications_active';
+        notificationToggle.classList.add('enabled');
+        notificationToggle.classList.remove('disabled');
+    } else if (Notification.permission === 'denied') {
+        notificationToggle.textContent = 'notifications_off';
+        notificationToggle.classList.add('disabled');
+        notificationToggle.classList.remove('enabled');
+    } else {
+        notificationToggle.textContent = 'notifications';
+        notificationToggle.classList.remove('enabled', 'disabled');
+    }
+}
+
 // Request notification permission
 function requestNotificationPermission() {
     if ('Notification' in window) {
-        // Check if we need to ask for permission
-        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        // Initialize notification permission state if not set
+        if (localStorage.getItem('notifications_enabled') === null) {
+            localStorage.setItem('notifications_enabled', Notification.permission === 'granted' ? 'true' : 'false');
+        }
+        
+        // Update the notification toggle icon
+        updateNotificationToggleIcon();
+        
+        // If permission is already granted, we don't need to show the permission request
+        if (Notification.permission === 'granted') {
+            return;
+        }
+        
+        // If permission is denied, we can't request it again
+        if (Notification.permission === 'denied') {
+            return;
+        }
+        
+        // We only show the permission request if it's not been decided yet
+        if (Notification.permission === 'default') {
             // Create a button in the notification container
             const permissionBtn = document.createElement('button');
             permissionBtn.textContent = 'Enable Notifications';
@@ -1002,6 +1272,10 @@ function requestNotificationPermission() {
                             permissionBtn.parentNode.removeChild(permissionBtn);
                         }
                         
+                        // Update notification toggle icon
+                        localStorage.setItem('notifications_enabled', 'true');
+                        updateNotificationToggleIcon();
+                        
                         // Test notification
                         setTimeout(() => {
                             sendSystemNotification('Notification system is working! You will be notified about your tasks.', '2');
@@ -1009,6 +1283,10 @@ function requestNotificationPermission() {
                     } else {
                         // Show message if denied
                         showNotification('Notification permission denied. You can enable it in your browser settings.', '1');
+                        
+                        // Update notification toggle icon
+                        localStorage.setItem('notifications_enabled', 'false');
+                        updateNotificationToggleIcon();
                     }
                 }).catch(error => {
                     console.error('Error requesting notification permission:', error);
@@ -1021,19 +1299,6 @@ function requestNotificationPermission() {
             
             // Add button to notification container
             notificationContainer.appendChild(permissionBtn);
-        } else if (Notification.permission === 'granted') {
-            // Permission already granted, send a test notification on first load
-            const lastNotificationTest = localStorage.getItem('last_notification_test');
-            const now = new Date().getTime();
-            
-            // Only send test notification if we haven't done so in the last 24 hours
-            if (!lastNotificationTest || (now - parseInt(lastNotificationTest)) > 24 * 60 * 60 * 1000) {
-                // Wait a bit before sending the test notification
-                setTimeout(() => {
-                    sendSystemNotification('To-Do List is running in the background. You will be notified about your tasks.', '1');
-                    localStorage.setItem('last_notification_test', now.toString());
-                }, 5000);
-            }
         }
     }
 }
