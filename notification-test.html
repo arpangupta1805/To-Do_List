@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px;
+            background-color: #6a5acd;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5a4abf;
+        }
+        .log {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Notification Test</h1>
+    
+    <div>
+        <h2>System Notification Test</h2>
+        <button id="requestPermission">Request Notification Permission</button>
+        <button id="testSystemNotification">Test System Notification</button>
+    </div>
+    
+    <div>
+        <h2>Sound Test</h2>
+        <button id="testLowSound">Test Low Priority Sound</button>
+        <button id="testMediumSound">Test Medium Priority Sound</button>
+        <button id="testHighSound">Test High Priority Sound</button>
+    </div>
+    
+    <div class="log" id="log"></div>
+    
+    <script>
+        // Log function
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        // Sound paths
+        const sounds = {
+            low: './sounds/notification-low.wav',
+            medium: './sounds/notification-medium.wav',
+            high: './sounds/notification-high.wav'
+        };
+        
+        // Play sound function
+        function playSound(soundUrl) {
+            log(`Attempting to play sound: ${soundUrl}`);
+            
+            try {
+                const audio = new Audio(soundUrl);
+                
+                // Set volume
+                audio.volume = 0.5;
+                
+                // Play with promise handling
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        log('Sound played successfully');
+                    }).catch(e => {
+                        log(`Audio play failed: ${e.message}`);
+                        
+                        if (e.name === 'NotAllowedError') {
+                            log('Audio requires user interaction first');
+                        }
+                    });
+                }
+            } catch (error) {
+                log(`Error playing sound: ${error.message}`);
+            }
+        }
+        
+        // Send system notification
+        function sendSystemNotification(message) {
+            if (!('Notification' in window)) {
+                log('This browser does not support system notifications');
+                return;
+            }
+            
+            if (Notification.permission !== 'granted') {
+                log(`Notification permission not granted, current status: ${Notification.permission}`);
+                return;
+            }
+            
+            try {
+                const notification = new Notification('Notification Test', {
+                    body: message,
+                    icon: './logo 32px.png',
+                    requireInteraction: true
+                });
+                
+                log('System notification sent successfully');
+                
+                notification.onclick = function() {
+                    log('Notification clicked');
+                    window.focus();
+                    this.close();
+                };
+                
+                notification.onerror = function(error) {
+                    log(`Notification error: ${error}`);
+                };
+                
+                setTimeout(() => {
+                    notification.close();
+                }, 10000);
+            } catch (error) {
+                log(`Error creating notification: ${error.message}`);
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('requestPermission').addEventListener('click', function() {
+            log('Requesting notification permission...');
+            
+            Notification.requestPermission().then(permission => {
+                log(`Permission request result: ${permission}`);
+            });
+        });
+        
+        document.getElementById('testSystemNotification').addEventListener('click', function() {
+            sendSystemNotification('This is a test system notification');
+        });
+        
+        document.getElementById('testLowSound').addEventListener('click', function() {
+            playSound(sounds.low);
+        });
+        
+        document.getElementById('testMediumSound').addEventListener('click', function() {
+            playSound(sounds.medium);
+        });
+        
+        document.getElementById('testHighSound').addEventListener('click', function() {
+            playSound(sounds.high);
+        });
+        
+        // Log initial state
+        window.addEventListener('load', function() {
+            log(`Notification permission: ${Notification.permission}`);
+            log('Page loaded. Click the buttons to test notifications and sounds.');
+        });
+    </script>
+</body>
+</html> 

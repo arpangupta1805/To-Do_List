@@ -34,11 +34,11 @@ let targetAngle = 0;
 let currentAngle = 0;
 let needleSpeed = 0.5; // degrees per animation frame
 
-// Custom notification sounds - using local files instead of URLs
+// Custom notification sounds
 const notificationSounds = {
-    low: 'sounds/notification-low.mp3',
-    medium: 'sounds/notification-medium.mp3',
-    high: 'sounds/notification-high.mp3'
+    low: './sounds/notification-low.wav',
+    medium: './sounds/notification-medium.wav',
+    high: './sounds/notification-high.wav'
 };
 
 // Theme switching functionality
@@ -355,6 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
             switchBrowserTab(this.dataset.browser);
         });
     });
+    
+    // Test notification function - accessible from console
+    window.testNotification = function(importance = '2') {
+        showNotification('This is a test notification. If you see this, notifications are working!', importance);
+    };
+    
 });
 
 // Apply saved theme or default to dark
@@ -1113,6 +1119,16 @@ function sendSystemNotification(message, importance) {
         return;
     }
     
+    // Check if browser supports notifications
+    if (!('Notification' in window)) {
+        return;
+    }
+    
+    // Check if permission is granted
+    if (Notification.permission !== 'granted') {
+        return;
+    }
+    
     // Format the notification title with time
     const now = new Date();
     const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1121,8 +1137,8 @@ function sendSystemNotification(message, importance) {
     // Set notification options
     const options = {
         body: message,
-        icon: 'favicon.ico', // Make sure you have a favicon
-        badge: 'favicon.ico',
+        icon: './logo 32px.png', // Use the existing logo file in the current directory
+        badge: './logo 32px.png',
         vibrate: [200, 100, 200], // Vibration pattern for mobile devices
         tag: 'todo-notification', // Tag to replace previous notifications
         requireInteraction: true, // Keep notification visible until user interacts with it
@@ -1439,7 +1455,6 @@ function initNotificationSoundSetting() {
     }
     
     // Log the current setting for debugging
-    console.log('Notification sound setting:', localStorage.getItem('notification_sound'));
 }
 
 // Update notification sound setting
@@ -1483,7 +1498,6 @@ function updateNotificationSoundSetting(enabled) {
     }
     
     // Log the updated setting for debugging
-    console.log('Updated notification sound setting:', localStorage.getItem('notification_sound'));
 }
 
 // Start checking for upcoming tasks and sending notifications

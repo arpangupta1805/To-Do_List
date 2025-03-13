@@ -23,9 +23,9 @@ let browserTabs = document.querySelectorAll('.browser-tab');
 
 // Custom notification sounds
 const notificationSounds = {
-    low: '/sounds/notification-low.mp3',
-    medium: '/sounds/notification-medium.mp3',
-    high: '/sounds/notification-high.mp3'
+    low: './sounds/notification-low.wav',
+    medium: './sounds/notification-medium.wav',
+    high: './sounds/notification-high.wav'
 };
 
 // Theme switching functionality
@@ -88,6 +88,12 @@ function showNotification(message, importance = '1') {
     setTimeout(() => {
         notificationContainer.classList.add('hidden');
     }, 5000);
+    
+    // Send system notification if supported and enabled
+    if ('Notification' in window && Notification.permission === 'granted' && 
+        localStorage.getItem('notifications_enabled') !== 'false') {
+        sendSystemNotification(message, importance);
+    }
 }
 
 function playNotificationSound(importance = '1') {
@@ -104,9 +110,139 @@ function playNotificationSound(importance = '1') {
             soundUrl = notificationSounds.low;
     }
     
-    const audio = new Audio(soundUrl);
-    audio.volume = importance === '3' ? 0.7 : (importance === '2' ? 0.5 : 0.3);
-    audio.play().catch(e => console.log('Audio play failed:', e));
+    try {
+        const audio = new Audio(soundUrl);
+        audio.volume = importance === '3' ? 0.7 : (importance === '2' ? 0.5 : 0.3);
+        
+        // Use promise to handle play
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+            }).catch(e => {
+                console.error('Audio play failed:', e);
+                
+                // Create a temporary button for user interaction if needed
+                if (e.name === 'NotAllowedError') {
+                    
+                    // Create a temporary button that will enable sound
+                    if (!document.querySelector('.sound-trigger')) {
+                        const soundTrigger = document.createElement('button');
+                        soundTrigger.className = 'sound-trigger';
+                        soundTrigger.textContent = 'Enable Sound';
+                        soundTrigger.style.position = 'fixed';
+                        soundTrigger.style.bottom = '10px';
+                        soundTrigger.style.right = '10px';
+                        soundTrigger.style.zIndex = '9999';
+                        soundTrigger.style.padding = '10px';
+                        soundTrigger.style.backgroundColor = '#B3A569';
+                        soundTrigger.style.color = 'white';
+                        soundTrigger.style.border = 'none';
+                        soundTrigger.style.borderRadius = '5px';
+                        soundTrigger.style.cursor = 'pointer';
+                        
+                        soundTrigger.addEventListener('click', () => {
+                            // Try playing sound again
+                            const newAudio = new Audio(soundUrl);
+                            newAudio.volume = importance === '3' ? 0.7 : (importance === '2' ? 0.5 : 0.3);
+                            newAudio.play().then(() => {
+                            }).catch(e => {
+                                console.error('Audio still failed after user interaction:', e);
+                            });
+                            
+                            // Remove the button after click
+                            document.body.removeChild(soundTrigger);
+                        });
+                        
+                        document.body.appendChild(soundTrigger);
+                        
+                        // Auto-remove after 10 seconds
+                        setTimeout(() => {
+                            if (document.body.contains(soundTrigger)) {
+                                document.body.removeChild(soundTrigger);
+                            }
+                        }, 10000);
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error playing notification sound:', error);
+    }
+}
+
+// Send system notification
+function sendSystemNotification(message, importance) {
+    // Skip if notifications are disabled
+    if (localStorage.getItem('notifications_enabled') === 'false') {
+        return;
+    }
+    
+    // Check if browser supports notifications
+    if (!('Notification' in window)) {
+        return;
+    }
+    
+    // Check if permission is granted
+    if (Notification.permission !== 'granted') {
+
+        // If permission is not denied, we can request it
+        if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    // Try sending the notification again
+                    sendSystemNotification(message, importance);
+                }
+            });
+        }
+        return;
+    }
+    
+    // Format the notification title with time
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const title = `To-Do List (${formattedTime})`;
+    
+    // Set notification options
+    const options = {
+        body: message,
+        icon: './logo 32px.png', // Use the existing logo file in the current directory
+        badge: './logo 32px.png',
+        vibrate: [200, 100, 200], // Vibration pattern for mobile devices
+        tag: 'todo-notification', // Tag to replace previous notifications
+        requireInteraction: true, // Keep notification visible until user interacts with it
+        silent: false // Allow browser to play notification sound
+    };
+    
+    try {
+        // Create notification
+        const notification = new Notification(title, options);
+        
+        // Play our custom sound
+        if (localStorage.getItem('notification_sound') === 'true') {
+            playNotificationSound(importance);
+        }
+        
+        // Close notification after 10 seconds
+        setTimeout(() => {
+            notification.close();
+        }, 10000);
+        
+        // Handle click on notification
+        notification.onclick = function() {
+            // Focus on window when notification is clicked
+            window.focus();
+            this.close();
+        };
+        
+        // Handle notification errors
+        notification.onerror = function(error) {
+            console.error('Notification error:', error);
+        };
+    } catch (error) {
+        console.error('Error creating notification:', error);
+        // Fallback to in-app notification only
+    }
 }
 
 // To update the current time every second
@@ -132,6 +268,8 @@ function checkNotifications(now) {
     }
     
     let tasks = getLocalStorage();
+    let foundNotifications = false;
+    
     tasks.forEach(task => {
         if (!task.isDeleted && task.task_status !== 'Completed' && task.task_status !== 'Missed') {
             const deadline = new Date(task.deadline);
@@ -139,9 +277,11 @@ function checkNotifications(now) {
             
             // If notification time has passed but not yet notified
             if (now >= notificationTime && !task.notified) {
-                const timeLeft = getTimeLeft(now, deadline);
+                const timeLeft = getTimeLeft(now, deadline);    
+                
                 showNotification(`Task "${task.task_name}" is due in ${timeLeft}!`, task.importance);
                 task.notified = true;
+                foundNotifications = true;
                 
                 // Update task in localStorage
                 const taskIndex = tasks.indexOf(task);
@@ -149,6 +289,9 @@ function checkNotifications(now) {
             }
         }
     });
+    
+    if (!foundNotifications) {
+    }
 }
 
 // Calculate when to show notification based on user preferences
@@ -156,8 +299,10 @@ function calculateNotificationTime(task) {
     const deadline = new Date(task.deadline);
     const notificationTime = new Date(deadline);
     
-    const amount = task.notification_time || 1;
+    // Default to 1 hour before if not specified
+    const amount = task.notification_time ? parseInt(task.notification_time) : 1;
     const unit = task.notification_unit || 'hours';
+    
     
     switch(unit) {
         case 'minutes':
@@ -172,8 +317,10 @@ function calculateNotificationTime(task) {
         case 'weeks':
             notificationTime.setDate(notificationTime.getDate() - (amount * 7));
             break;
+        default:
+            // Default to 1 hour before
+            notificationTime.setHours(notificationTime.getHours() - 1);
     }
-    
     return notificationTime;
 }
 
@@ -649,7 +796,6 @@ document.getElementById('pending_task').addEventListener('click', function (e) {
 
 // Helper function to show a specific task section
 function showTaskSection(section) {
-    console.log('Showing task section:', section);
     // Hide all sections first
     create.hidden = true;
     document.getElementsByClassName('deleted_task')[0].hidden = true;
@@ -745,15 +891,12 @@ dismissNotification.addEventListener('click', function() {
 
 // Toggle mobile sidebar
 function toggleMobileSidebar() {
-    console.log('Toggling mobile sidebar');
     mobileSidebar.classList.toggle('open');
     document.body.classList.toggle('overlay');
-    console.log('Mobile sidebar open:', mobileSidebar.classList.contains('open'));
 }
 
 // Close mobile sidebar
 function closeMobileSidebar() {
-    console.log('Closing mobile sidebar');
     mobileSidebar.classList.remove('open');
     document.body.classList.remove('overlay');
 }
@@ -826,27 +969,21 @@ function createTaskListPreview(title, icon, tasks) {
     viewAllBtn.textContent = 'View All';
     viewAllBtn.dataset.type = icon;
     viewAllBtn.addEventListener('click', function() {
-        console.log('View All button clicked with type:', this.dataset.type);
         // Handle click based on task type
         switch(this.dataset.type) {
             case 'home':
-                console.log('Showing all tasks');
                 showTaskSection('all');
                 break;
             case 'priority_high':
-                console.log('Showing pending tasks');
                 showTaskSection('pending');
                 break;
             case 'assignment_turned_in':
-                console.log('Showing completed tasks');
                 showTaskSection('completed');
                 break;
             case 'assignment_late':
-                console.log('Showing missed tasks');
                 showTaskSection('missed');
                 break;
             case 'delete':
-                console.log('Showing deleted tasks');
                 showTaskSection('deleted');
                 break;
         }
@@ -861,92 +998,35 @@ function createTaskListPreview(title, icon, tasks) {
     sidebarContent.appendChild(preview);
 }
 
-// Helper functions to get different task types
-function getAllTasks() {
-    const tasks = [];
-    let i = 0;
-    while (localStorage.getItem(`task-${i}`)) {
-        const task = JSON.parse(localStorage.getItem(`task-${i}`));
-        if (!task.isDeleted) {
-            tasks.push(task);
+// Find the existing testNotification function and replace it
+window.testNotification = function(importance = '2') {
+    
+    
+    // If permission is not granted, request it first
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                localStorage.setItem('notifications_enabled', 'true');
+                updateNotificationToggleIcon();
+                // Now show the test notification
+                showNotification('This is a test notification. If you see this, notifications are working!', importance);
+            } else {
+                // Show only in-app notification
+                showNotification('Notification permission not granted. Only in-app notifications will work.', '1');
+            }
+        });
+    } else {
+        // Show the test notification
+        showNotification('This is a test notification. If you see this, notifications are working!', importance);
+        
+        // Also directly test system notification if permission is granted
+        if (Notification.permission === 'granted') {
+            setTimeout(() => {
+                sendSystemNotification('This is a direct system notification test.', importance);
+            }, 1000); // Delay slightly to avoid confusion
         }
-        i++;
     }
-    return tasks;
-}
-
-function getPendingTasks() {
-    return getAllTasks().filter(task => task.task_status === 'Pending');
-}
-
-function getCompletedTasks() {
-    return getAllTasks().filter(task => task.task_status === 'Completed');
-}
-
-function getMissedTasks() {
-    return getAllTasks().filter(task => task.task_status === 'Missed');
-}
-
-function getDeletedTasks() {
-    const tasks = [];
-    let i = 0;
-    while (localStorage.getItem(`task-${i}`)) {
-        const task = JSON.parse(localStorage.getItem(`task-${i}`));
-        if (task.isDeleted) {
-            tasks.push(task);
-        }
-        i++;
-    }
-    return tasks;
-}
-
-// Show notification help modal
-function showNotificationHelpModal() {
-    notificationHelpModal.classList.remove('hidden');
-    document.body.classList.add('overlay');
-}
-
-// Hide notification help modal
-function hideNotificationHelpModal() {
-    notificationHelpModal.classList.add('hidden');
-    document.body.classList.remove('overlay');
-}
-
-// Switch browser tab in help modal
-function switchBrowserTab(browser) {
-    // Hide all instruction divs
-    document.querySelectorAll('.browser-instructions').forEach(div => {
-        div.classList.add('hidden');
-    });
-    
-    // Show selected browser instructions
-    document.getElementById(`${browser}-instructions`).classList.remove('hidden');
-    
-    // Update active tab
-    browserTabs.forEach(tab => {
-        if (tab.dataset.browser === browser) {
-            tab.classList.add('active');
-        } else {
-            tab.classList.remove('active');
-        }
-    });
-}
-
-// Detect user's browser and show appropriate instructions
-function detectBrowser() {
-    const userAgent = navigator.userAgent;
-    let browser = 'chrome'; // Default
-    
-    if (userAgent.indexOf('Firefox') > -1) {
-        browser = 'firefox';
-    } else if (userAgent.indexOf('Safari') > -1 && userAgent.indexOf('Chrome') === -1) {
-        browser = 'safari';
-    } else if (userAgent.indexOf('Edg') > -1) {
-        browser = 'edge';
-    }
-    
-    switchBrowserTab(browser);
-}
+};
 
 window.onload = function() {
     document.getElementsByClassName('task_list')[0].hidden = false;
@@ -964,6 +1044,9 @@ window.onload = function() {
         if (soundToggle) {
             soundToggle.checked = savedSound === 'true';
         }
+    } else {
+        // Default to true if not set
+        localStorage.setItem('notification_sound', 'true');
     }
     
     // Initialize notification permission state
@@ -982,65 +1065,41 @@ window.onload = function() {
         notificationToggle.addEventListener('click', toggleNotificationPermission);
     }
     
-    // Set up mobile menu
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function() {
-            populateMobileSidebar();
-            toggleMobileSidebar();
+    // Add event listener for nav-home link
+    const navHome = document.getElementById('nav-home');
+    if (navHome) {
+        navHome.addEventListener('click', function(e) {
+            e.preventDefault();
+            showTaskSection('all');
         });
     }
     
-    if (closeSidebarBtn) {
-        closeSidebarBtn.addEventListener('click', closeMobileSidebar);
-    }
-    
-    // Close sidebar when clicking outside
-    document.addEventListener('click', function(e) {
-        if (mobileSidebar.classList.contains('open') && 
-            !mobileSidebar.contains(e.target) && 
-            e.target !== menuToggle && 
-            !menuToggle.contains(e.target)) {
-            closeMobileSidebar();
-        }
-    });
-    
-    // Fix notification slider in add task form
-    const notificationSlider = document.querySelector('.sound-toggle .slider');
-    if (notificationSlider) {
-        notificationSlider.addEventListener('click', function() {
-            const checkbox = this.previousElementSibling;
-            checkbox.checked = !checkbox.checked;
+    // Test notification function - accessible from console
+    window.testNotification = function(importance = '2') {
+        
+        // If permission is not granted, request it first
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    localStorage.setItem('notifications_enabled', 'true');
+                    updateNotificationToggleIcon();
+                    // Now show the test notification
+                    showNotification('This is a test notification. If you see this, notifications are working!', importance);
+                } else {
+                    // Show only in-app notification
+                    showNotification('Notification permission not granted. Only in-app notifications will work.', '1');
+                }
+            });
+        } else {
+            // Show the test notification
+            showNotification('This is a test notification. If you see this, notifications are working!', importance);
             
-            // Trigger change event
-            const event = new Event('change');
-            checkbox.dispatchEvent(event);
-        });
-    }
-    
-    // Set up notification help modal
-    if (notificationHelpBtn) {
-        notificationHelpBtn.addEventListener('click', function() {
-            showNotificationHelpModal();
-            detectBrowser(); // Auto-select the user's browser tab
-        });
-    }
-    
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', hideNotificationHelpModal);
-    }
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', function(e) {
-        if (e.target === notificationHelpModal) {
-            hideNotificationHelpModal();
+            // Also directly test system notification if permission is granted
+            if (Notification.permission === 'granted') {
+                setTimeout(() => {
+                    sendSystemNotification('This is a direct system notification test.', importance);
+                }, 1000); // Delay slightly to avoid confusion
+            }
         }
-    });
-    
-    // Set up browser tabs in help modal
-    browserTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            switchBrowserTab(this.dataset.browser);
-        });
-    });
+    };
 }
-
